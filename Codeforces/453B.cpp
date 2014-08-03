@@ -3,66 +3,65 @@
 
 using namespace std;
 
-const int g[10] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
-int n, a[32], r[32];
-int f[128][1<<10], c[128][1<<10];
-vector<int> l[10]; 
-
-void gao(int n, int mask) {
-    if (mask == 0) return 0;
-    int cc = c[n][mask];
-    int m = 30, ccc;
-    for (int i = 0; i < l[cc].size(); i++) {
-	if (abs(l[cc][i] - r[cc]) < m) {
-	    r[cc] = l[n][i];
-	}
-    }
-    gao(n-1, mask ^ (1<<cc));
-}
+int n, maxf;
+const int nl = 17;
+const int maxn = 128;
+const int trange = 59;
+const int l[nl] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 
+                  41, 43, 47, 53, 59};
+int a[maxn], mt[trange+1];
+int f[maxn][1<<nl], c[maxn][1<<nl], p[maxn][1<<nl];
+int ans[maxn];
 
 int main() {
-    for (int i = 0; i < 10; i++) {
-	for (int j = 1; j * g[i] <= 30; j++)
-	    l[i].push_back(j * g[i]);
-    }
-
-    cin >> n;
-    for (int i = 1; i <= n; i++)  {
-	cin >> a[i];
-	r[i] = a[i];
-    }
-
-    for (int i = 1; i <= n; i++) {
-	f[i][0] = f[i-1][0] + abs(a[i]-1);
-	for (int j = 1; j < (1<<10); j++) {
-	    int m = f[i][0], cc;
-	    for (int k = 0; k < 10; k++) 
-		if (j >> k & 1) {
-		    int mm = 30;
-		    for (int t = 0; t < l[k].size(); t++)
-			mm = min(mm, abs(a[i]-l[k][t]));		
-		    if (m > f[i-1][j ^ (1 << k)]) {
-			m = f[i-1][j ^ (1 << k)];
-			cc = k;
-		    }	
-		}
-	    f[i][j] = m;
-	    c[i][j] = cc;
+   for (int i = 1; i <= 59; i++) {
+	for (int j = 0; j < nl; j++) {
+	    if (i % l[j] == 0) {
+		mt[i] |= 1 << j;
+	    }
 	}
-     }
+   }
 
-    int m = 30*n, cc;
-    for (int i = 0; i < (1<<10); i++) 
-	if (m > f[n][i]) {
-	    m = f[n][i];
-	    cc = i;
-	}
-  
-    gao(n, i);
-    for (int i = 1; i <= n; i++) {
-	cout << r[i];
-	if (i != n) cout << ' ';
-	else cout << endl;
-    }
-    return 0;
+   cin >> n;
+   for (int i = 0; i < n; i++) 
+       cin >> a[i];
+
+   maxf = 30 * n;
+   for (int i = 0; i <= n; i++)
+       for (int j = 0; j < 1<<nl; j++)
+	   f[i][j] = maxf;
+
+   f[0][0] = 0;
+   for (int i = 0; i < n; i++)
+       for (int j = 0; j < 1<<nl; j++)
+	   for (int k = 1; k <= trange; k++){
+	       if (f[i][j] != maxf && ((j & mt[k]) == 0)) {
+		   int tm = j | mt[k];
+		   if (f[i+1][tm] > f[i][j] + abs(a[i]-k)) {
+		       c[i+1][tm] = k;
+		       p[i+1][tm] = j;
+		       f[i+1][tm] = f[i][j] + abs(a[i]-k);
+		   }
+	       }
+	   }
+
+   int r, mm = maxf;
+   for (int i = 0; i < 1<<nl; i++) {
+       if (f[n][i] < mm) {
+	   mm = f[n][i];
+	   r = i;
+       }
+   }
+
+   for (int i = n; i >= 1; i--) {
+       ans[i] = c[i][r];
+       r = p[i][r];
+   }
+
+   for (int i = 1; i <= n; i++) {
+       cout << ans[i];
+       if (i == n) cout << endl;
+       else cout << ' ';
+   }
+   return 0;
 }
